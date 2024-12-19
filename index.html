@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Emoji Hunter</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* General styles */
+        body {
+            font-family: courier, serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #46424E;
+            color: white;
+            height: 100%;
+            overflow: hidden;
+            cursor: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="32" height="32"%3E%3Ccircle cx="16" cy="16" r="12" fill="black" /%3E%3C/svg%3E'), auto;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* Game area styles */
+        #game-area {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-color: #A499B3;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Score and timer */
+        #score-board, #timer {
+            font-size: 24px;
+            position: absolute;
+            top: 10px;
+            color: white;
+        }
+
+        #score-board {
+            left: 10px;
+        }
+
+        #timer {
+            right: 10px;
+        }
+
+        /* Game over screen */
+        #results {
+            font-size: 24px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+        }
+
+        /* Button styles */
+        .play-again-button, .restart-button, .level-button {
+            background-color: #46424E;
+            color: white;
+            font-family: courier, serif;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 1;
+            margin-top: 20px;
+        }
+
+        .level-button {
+            margin: 10px;
+        }
+
+        .level-button:hover, .play-again-button:hover, .restart-button:hover {
+            background-color: #ff0000;
+            color: white;
+        }
+
+        .restart-button {
+            background-color: white;
+            color: black;
+        }
+
+        /* Level buttons container */
+        #level-buttons {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        /* Larger Dot styles */
+        .dot {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            font-size: 5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            display: none;
+            border-radius: 50%;
+            background-color: transparent;
+        }
+
+        /* Solid Red Circle around the Emoji */
+        #emoji-container {
+            font-size: 80px;
+            margin-bottom: 10px;
+            animation: fadeIn 0.5s ease-in-out;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 200px;
+            height: 200px;
+            background-color: red;  /* Solid red background */
+            border-radius: 50%;
+            padding: 10px;
+        }
+
+        #emoji-display {
+            font-size: 80px;
+            color: white; /* White color for the emoji */
+        }
+
+        /* Game title */
+        #game-title {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        /* Scale down dots on smaller screens */
+        @media (max-width: 600px) {
+            .dot {
+                width: 120px;
+                height: 120px;
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Keyframes for fade effect (optional) */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-area">
+        <div id="level-buttons">
+            <div id="emoji-container">
+                <div id="emoji-display">🐶</div>
+            </div>
+            <h1 id="game-title">Emoji Hunter</h1><br><br><br>
+            <button class="level-button" id="easy-btn">😹 Easy</button>
+            <button class="level-button" id="medium-btn">😺 Medium</button>
+            <button class="level-button" id="hard-btn">😼 Hard</button>
+            <button class="level-button" id="super-btn">🙀 Super</button>
+        </div>
+        <div id="score-board">To go: <span id="score">0</span></div>
+        <div id="timer">Time: <span id="time">30</span>s</div>
+        <div id="results">
+            <h2>Game Over!</h2>
+            <p id="final-message"></p>
+            <button class="play-again-button" onclick="tryAgain()">Try Again</button>
+            <button class="restart-button" onclick="restartGame()">Change level</button>
+        </div>
+    </div>
+
+    <script>
+        const gameArea = document.getElementById('game-area');
+        const scoreBoard = document.getElementById('score');
+        const timer = document.getElementById('time');
+        const results = document.getElementById('results');
+        const finalMessage = document.getElementById('final-message');
+        const levelButtons = document.getElementById('level-buttons');
+        const emojiDisplay = document.getElementById('emoji-display');
+
+        let remainingEmojis = 0;
+        let timeLeft = 30;
+        let countdownInterval;
+        let activeEmojis = [];
+        let bombEmojis = [];
+        let currentLevel = ''; // Store current level for "Try Again"
+        let gameFinished = false; // To prevent new emojis after game ends
+
+        const animalEmojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐯', '🦁', '🐮', '🐷', '🐸', '🦄', '🐵', '🦒', '🐘', '🐴', '🐗', '🦓'];
+        const bombEmoji = '💣';
+        let totalEmojis = 5; // Default value to avoid errors
+
+        function getRandomAnimalEmoji() {
+            const randomIndex = Math.floor(Math.random() * animalEmojis.length);
+            return animalEmojis[randomIndex];
+        }
+
+        function startGame() {
+            if (gameFinished) return;
+            remainingEmojis = totalEmojis;
+            timeLeft = 30;
+            activeEmojis = [];
+            bombEmojis = [];
+            scoreBoard.textContent = `${remainingEmojis}`;
+            timer.textContent = timeLeft;
+            finalMessage.textContent = '';
+            results.style.display = 'none';
+            levelButtons.style.display = 'none';
+
+            gameFinished = false;
+
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                timer.textContent = timeLeft;
+
+                if (timeLeft <= 0 || remainingEmojis <= 0) {
+                    endGame();
+                }
+            }, 1000);
+
+            for (let i = 0; i < totalEmojis; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                dot.textContent = getRandomAnimalEmoji();
+                gameArea.appendChild(dot);
+                activeEmojis.push(dot);
+                dot.style.display = 'flex';
+                dot.style.left = `${Math.random() * (gameArea.offsetWidth - 000)}px`;
+                dot.style.top = `${Math.random() * (gameArea.offsetHeight - 000)}px`;
+                bounceDot(dot);
+
+                dot.addEventListener('click', () => {
+                    // Show the explosion emoji for 100ms
+                    dot.textContent = '💥';  // Explosion emoji
+                    setTimeout(() => {
+                        dot.style.display = 'none';
+                        remainingEmojis--;
+                        scoreBoard.textContent = `${remainingEmojis}`;
+                        activeEmojis = activeEmojis.filter(d => d !== dot);
+                    }, 100); // Hide after 100ms
+                });
+            }
+
+            spawnBombs();
+        }
+
+        function endGame() {
+            clearInterval(countdownInterval);
+            gameFinished = true;
+
+            results.style.display = 'block';
+
+            if (remainingEmojis === 0) {
+                finalMessage.textContent = `You finished in just ${30 - timeLeft} seconds!`;
+                results.querySelector('h2').textContent = "You did it!";
+            } else {
+                finalMessage.textContent = `You had ${remainingEmojis} emojis left.`;
+                results.querySelector('h2').textContent = "Game Over!";
+            }
+
+            activeEmojis.forEach(dot => dot.style.display = 'none');
+            bombEmojis.forEach(bomb => bomb.style.display = 'none');
+        }
+
+        function spawnBombs() {
+            let bombsToSpawn = 0;
+
+            if (currentLevel === 'Easy') bombsToSpawn = 1;
+            else if (currentLevel === 'Medium') bombsToSpawn = 2;
+            else if (currentLevel === 'Hard') bombsToSpawn = 3;
+            else if (currentLevel === 'Super') bombsToSpawn = 5;
+
+            for (let i = 0; i < bombsToSpawn; i++) {
+                const bombDot = document.createElement('div');
+                bombDot.classList.add('dot');
+                bombDot.textContent = bombEmoji;
+                gameArea.appendChild(bombDot);
+                bombEmojis.push(bombDot);
+                bombDot.style.display = 'flex';
+                bombDot.style.left = `${Math.random() * (gameArea.offsetWidth - 100)}px`;
+                bombDot.style.top = `${Math.random() * (gameArea.offsetHeight - 100)}px`;
+
+                bombDot.addEventListener('click', () => {
+                    // Show the explosion emoji for 100ms when a bomb is clicked
+                    bombDot.textContent = '💥';  // Explosion emoji for bomb
+                    setTimeout(() => {
+                        bombDot.style.display = 'none';
+                        endGame();  // Trigger game over
+                    }, 100); // Hide after 100ms
+                });
+
+                bounceDot(bombDot);
+            }
+        }
+
+        function bounceDot(dot) {
+            let posX = parseFloat(dot.style.left);
+            let posY = parseFloat(dot.style.top);
+            let dx = getRandomDirection();
+            let dy = getRandomDirection();
+
+            function moveDot() {
+                posX += dx;
+                posY += dy;
+
+                if (posX <= 0 || posX >= gameArea.offsetWidth - dot.offsetWidth) {
+                    dx = getRandomDirection();
+                    posX = Math.max(0, Math.min(gameArea.offsetWidth - dot.offsetWidth, posX));
+                }
+                if (posY <= 0 || posY >= gameArea.offsetHeight - dot.offsetHeight) {
+                    dy = getRandomDirection();
+                    posY = Math.max(0, Math.min(gameArea.offsetHeight - dot.offsetHeight, posY));
+                }
+
+                dot.style.left = `${posX}px`;
+                dot.style.top = `${posY}px`;
+
+                if (dot.style.display !== 'none') {
+                    requestAnimationFrame(moveDot);
+                }
+            }
+
+            moveDot();
+        }
+
+        function getRandomDirection() {
+            return (Math.random() < 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 3);
+        }
+
+        document.getElementById('easy-btn').addEventListener('click', () => {
+            totalEmojis = 5;
+            currentLevel = 'Easy';
+            startGame();
+        });
+        document.getElementById('medium-btn').addEventListener('click', () => {
+            totalEmojis = 10;
+            currentLevel = 'Medium';
+            startGame();
+        });
+        document.getElementById('hard-btn').addEventListener('click', () => {
+            totalEmojis = 15;
+            currentLevel = 'Hard';
+            startGame();
+        });
+        document.getElementById('super-btn').addEventListener('click', () => {
+            totalEmojis = 25;
+            currentLevel = 'Super';
+            startGame();
+        });
+
+        function restartGame() {
+            location.reload();
+        }
+
+        function tryAgain() {
+            gameFinished = false;
+            results.style.display = 'none';
+            levelButtons.style.display = 'none';
+            startGame();
+        }
+
+        // Change the emoji every second
+        function changeEmoji() {
+            emojiDisplay.textContent = getRandomAnimalEmoji();
+        }
+
+        setInterval(changeEmoji, 1000);
+    </script>
+</body>
+</html>
