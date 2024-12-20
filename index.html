@@ -5,16 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-   <link rel="apple-touch-icon" href="emojihunter.png">
+
+    <link rel="apple-touch-icon" href="path/to/your-icon.png">
     
     <!-- Optional: Specify different sizes for the icon -->
     <!-- Example for different sizes -->
-    <link rel="apple-touch-icon" sizes="180x180" href="icon-180x180.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="path/to/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="path/to/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="path/to/icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="path/to/icon-76x76.png">
 
-    
+
+
     <style>
         /* General styles */
         body {
@@ -84,11 +86,11 @@
             border-radius: 50px;
             cursor: pointer;
             z-index: 1;
-            margin-top: 20px;
+            margin-top: 0px;
         }
 
         .level-button {
-            margin: 10px;
+            margin: 5px;
         }
 
         .level-button:hover, .play-again-button:hover, .restart-button:hover {
@@ -181,7 +183,7 @@
                 <div id="emoji-display">🐶</div>
             </div>
             <h1 id="game-title">Emoji Hunter</h1>
-<button class="level-button" id="easy-btn">😹 Easy</button><button class="level-button" id="medium-btn">😺 Medium</button><br><button class="level-button" id="hard-btn">😼 Hard</button><button class="level-button" id="super-btn">🙀 Super</button>
+<nobr><button class="level-button" id="easy-btn">😹 Easy</button><button class="level-button" id="medium-btn">😺 Medium</button></nobr><br><nobr><button class="level-button" id="hard-btn">😼 Hard</button><button class="level-button" id="super-btn">🙀 Super</button></nobr>
         </div>
         <div id="score-board">To go: <span id="score">0</span></div>
         <div id="timer">Time: <span id="time">30</span>s</div>
